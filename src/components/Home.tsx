@@ -1,7 +1,7 @@
 import 'bootstrap/dist/css/bootstrap.min.css'
 import { Container, Row, Col, Form, ListGroup, Button } from 'react-bootstrap'
 import { io } from 'socket.io-client'
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useState } from 'react'
 import User from '../types/IUser'
 import Message from '../types/IMessage'
 import { TRoom } from '../types/TRoom'
@@ -41,7 +41,6 @@ const Home = () => {
   const [chatHistory, setChatHistory] = useState<Message[]>([])
 
   const [room, setRoom] = useState<TRoom>('blue')
-  // const [privateRoom, setPrivateRoom] = useState()
   const [selectedUser, setSelectedUser] = useState('')
 
   useEffect(() => {
@@ -51,25 +50,25 @@ const Home = () => {
       console.log('connection established!')
     })
     // every time you use .on() you're LISTENING for an event emitted on the server
-
+    
     socket.on('loggedin', () => {
       console.log("You're correctly logged in now")
       setIsLoggedIn(true)
       fetchOnlineUsers()
-
+      
       socket.on('newConnection', () => {
         // this is for the already connected clients!
         // will never be sent to a user that just logged in
         console.log('Look! another client connected!')
         fetchOnlineUsers()
       })
-
+      
       socket.on('disconnectedUser', () => {
         console.log('Another client disconnected, refreshing the list...')
         fetchOnlineUsers()
       })
-
-      socket.on('message', (newMessage: Message) => {
+      
+      socket.on('privateMessage', (newMessage: Message) => {
         // setChatHistory([...chatHistory, newMessage])
         // bug?
         setChatHistory((currentChatHistory) => [
@@ -129,10 +128,7 @@ const Home = () => {
 
     socket.emit('privateMessage', { content: messageToSend, to:selectedUser })
     console.log(selectedUser);
-    
-    // const newMessage = {
-    //   userId: selectedUser
-    // }
+  
     setChatHistory([...chatHistory, messageToSend])
     // [...chatHistory] <-- creates an exact copy of chatHistory
     setMessage('')
@@ -141,9 +137,9 @@ const Home = () => {
   const handleToggleRoom = () => {
     setRoom(room => (room === 'blue' ? 'red' : 'blue'))
   }
-  const handleSelectedUser =(user:any)=> {
-   setSelectedUser(user)
-   console.log(user)
+  const handleSelectedUser =(userId:string)=> {
+   setSelectedUser(userId)
+   console.log(userId)
   }
 
   return (
@@ -196,7 +192,7 @@ const Home = () => {
             {onlineUsers
               .filter(user => user.room === room)
               .map((user) => (
-                <ListGroup.Item key={user.id} onClick={()=> {handleSelectedUser(user)}}>{user.username}</ListGroup.Item>
+                <ListGroup.Item key={user.id} onClick={()=> {handleSelectedUser(user.id)}} style={{cursor:"pointer"}}>{user.username}</ListGroup.Item>
               ))}
           </ListGroup>
         </Col>
