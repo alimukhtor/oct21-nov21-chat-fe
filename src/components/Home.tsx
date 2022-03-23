@@ -1,7 +1,7 @@
 import 'bootstrap/dist/css/bootstrap.min.css'
 import { Container, Row, Col, Form, ListGroup, Button } from 'react-bootstrap'
 import { io } from 'socket.io-client'
-import { FormEvent, KeyboardEventHandler, useEffect, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import User from '../types/IUser'
 import Message from '../types/IMessage'
 import { TRoom } from '../types/TRoom'
@@ -41,6 +41,8 @@ const Home = () => {
   const [chatHistory, setChatHistory] = useState<Message[]>([])
 
   const [room, setRoom] = useState<TRoom>('blue')
+  // const [privateRoom, setPrivateRoom] = useState()
+  const [selectedUser, setSelectedUser] = useState('')
 
   useEffect(() => {
     // we need to launch this event listener JUST ONCE!
@@ -120,7 +122,17 @@ const Home = () => {
       timestamp: Date.now(),
     }
 
-    socket.emit('sendmessage', { message: messageToSend, room })
+    // socket.emit('sendmessage', { message: messageToSend, room })
+    // setChatHistory([...chatHistory, messageToSend])
+    // // [...chatHistory] <-- creates an exact copy of chatHistory
+    // setMessage('')
+
+    socket.emit('privateMessage', { content: messageToSend, to:selectedUser })
+    console.log(selectedUser);
+    
+    // const newMessage = {
+    //   userId: selectedUser
+    // }
     setChatHistory([...chatHistory, messageToSend])
     // [...chatHistory] <-- creates an exact copy of chatHistory
     setMessage('')
@@ -128,6 +140,10 @@ const Home = () => {
 
   const handleToggleRoom = () => {
     setRoom(room => (room === 'blue' ? 'red' : 'blue'))
+  }
+  const handleSelectedUser =(user:any)=> {
+   setSelectedUser(user)
+   console.log(user)
   }
 
   return (
@@ -180,7 +196,7 @@ const Home = () => {
             {onlineUsers
               .filter(user => user.room === room)
               .map((user) => (
-                <ListGroup.Item key={user.id}>{user.username}</ListGroup.Item>
+                <ListGroup.Item key={user.id} onClick={()=> {handleSelectedUser(user)}}>{user.username}</ListGroup.Item>
               ))}
           </ListGroup>
         </Col>
